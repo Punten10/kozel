@@ -1,10 +1,7 @@
 import React from "react";
+import { IIconProps } from "@/shared/images/interfaces.tsx";
 
-interface IGoatLogoProps {
-    className?: string;
-}
-
-export const GoatLogo: React.FC<IGoatLogoProps> = ({ className }) => {
+export const GoatLogo: React.FC<IIconProps> = ({ className }) => {
     return (
         <svg
             version="1.1"

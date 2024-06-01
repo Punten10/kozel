@@ -1,27 +1,36 @@
 import {
+    Activity,
+    ArrowLeftRight,
+    Bell,
     Home,
+    LifeBuoy,
     LineChart,
     Link,
     Package,
     Package2,
     PanelLeft,
     Search,
+    Settings,
     ShoppingCart,
     User,
     Users2,
+    Wallet,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuPortal,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
-import { Navigation } from "@/entities/Navigation.tsx";
+import { Navigation } from "@/entities/Navigation/Index.tsx";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import {
@@ -32,14 +41,22 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb.tsx";
-import { useAppSelector } from "@/app/store/hooks";
-import { Index } from "@/pages/sub/Wallets/Index.tsx";
+import { useAppDispatch, useAppSelector } from "@/app/store/hooks";
+import { WalletsPage } from "@/pages/sub/Wallets/Index.tsx";
 import { Dashboard } from "@/pages/sub/Dashboard.tsx";
 import { Analytics } from "@/pages/sub/Analytics.tsx";
+import Contributors from "@/pages/sub/Contributors/Index.tsx";
+import { shell } from "@tauri-apps/api";
+import SettingsPage from "@/pages/sub/Settings/Index.tsx";
+import { setNav } from "@/app/store/slices/navigation.slice.ts";
 
 export const Main = () => {
     const nav = useAppSelector(state => state.navigation.nav);
+    const dispatch = useAppDispatch();
 
+    const switchNav = (nav: string) => {
+        dispatch(setNav(nav));
+    };
     return (
         <TooltipProvider>
             <div className="flex bg-zinc-950 dark:bg-background">
@@ -146,12 +163,12 @@ export const Main = () => {
                                         size="icon"
                                         className="overflow-hidden rounded-full"
                                     >
-                                        <User
+                                        <Activity
                                             className={"h-6 w-6 dark:invert"}
                                         />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                                <DropdownMenuContent align="center">
                                     <DropdownMenuLabel>
                                         My Account
                                     </DropdownMenuLabel>
@@ -164,14 +181,108 @@ export const Main = () => {
                                     <DropdownMenuItem>Logout</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="overflow-hidden rounded-full"
+                                    >
+                                        <Bell
+                                            className={"h-6 w-6 dark:invert"}
+                                        />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="center">
+                                    <DropdownMenuLabel>
+                                        My Account
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem>
+                                        Settings
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>Support</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem>Logout</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="overflow-hidden rounded-full"
+                                    >
+                                        <User
+                                            className={"h-6 w-6 dark:invert"}
+                                        />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>
+                                        My Account
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger>
+                                            <Settings className="mr-2 h-4 w-4" />
+                                            <span>Settings</span>
+                                        </DropdownMenuSubTrigger>
+                                        <DropdownMenuPortal>
+                                            <DropdownMenuSubContent>
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        switchNav(
+                                                            "settings:exchanges",
+                                                        )
+                                                    }
+                                                >
+                                                    <ArrowLeftRight className="mr-2 h-4 w-4" />
+                                                    <span>Exchanges</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        switchNav(
+                                                            "settings:wallets",
+                                                        )
+                                                    }
+                                                >
+                                                    <Wallet className="mr-2 h-4 w-4" />
+                                                    <span>Wallets</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                            </DropdownMenuSubContent>
+                                        </DropdownMenuPortal>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            shell
+                                                .open(
+                                                    "https://t.me/hidden_coding",
+                                                )
+                                                .then();
+                                        }}
+                                    >
+                                        <LifeBuoy className="mr-2 h-4 w-4" />
+                                        <span>Support</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem>Logout</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </header>
-                        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
+                        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-4 lg:grid-cols-3 xl:grid-cols-3">
                             {nav === "dashboard" ? (
                                 <Dashboard />
                             ) : nav === "wallets" ? (
-                                <Index />
+                                <WalletsPage />
                             ) : nav === "analytics" ? (
                                 <Analytics />
+                            ) : nav === "contributors" ? (
+                                <Contributors />
+                            ) : nav.startsWith("settings") ? (
+                                <SettingsPage />
                             ) : null}
                         </main>
                     </div>

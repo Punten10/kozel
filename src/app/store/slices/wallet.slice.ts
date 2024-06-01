@@ -1,18 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-
-type WalletType = "ton" | "evm" | "cosmos" | "starknet" | "trx" | "sol";
-
-interface IWallet {
-    isConnected: boolean;
-    address: string | null;
-    balance: string | null;
-    isDisabled: boolean;
-    type: WalletType;
-    phrase: string | null;
-    label: string | null;
-    ens: string | null;
-    group: string[];
-}
+import { IWallet } from "@/pages/sub/Wallets/interfaces.tsx";
 
 interface IWallets {
     wallets?: IWallet[];

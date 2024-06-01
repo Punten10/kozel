@@ -2,12 +2,14 @@ import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/ui/tooltip.tsx";
 import { LinkButton } from "@/shared/LinkButton.tsx";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -31,7 +33,6 @@ export const Navigation = () => {
     const nav = useAppSelector(state => state.navigation.nav);
 
     const switchNav = (nav: string) => {
-        console.log(nav);
         dispatch(setNav(nav));
     };
 
@@ -118,23 +119,39 @@ export const Navigation = () => {
                             className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                         >
                             <PartyPopper className="h-5 w-5 " />
-                            <span className="sr-only">Settings</span>
+                            <span className="sr-only">Contributors</span>
                         </LinkButton>
                     </TooltipTrigger>
-                    <TooltipContent side="right">Settings</TooltipContent>
+                    <TooltipContent side="right">Contributors</TooltipContent>
                 </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <LinkButton
-                            onClick={() => switchNav("settings")}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="link"
+                            size="icon"
+                            className="overflow-hidden rounded-full"
                         >
-                            <Settings className="h-5 w-5 " />
-                            <span className="sr-only">Settings</span>
-                        </LinkButton>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">Settings</TooltipContent>
-                </Tooltip>
+                            <Settings className="h-5 w-5 opacity-65 transition-opacity duration-300 hover:opacity-100" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Settings</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => switchNav("settings:exchanges")}
+                        >
+                            Exchanges
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => switchNav("settings:wallets")}
+                        >
+                            Wallets
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>Logout</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </nav>
         </aside>
     );
