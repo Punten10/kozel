@@ -29,7 +29,7 @@ export const WalletsImport: React.FC = () => {
     };
 
     return (
-        <Card className="col-start-1 w-[350px]">
+        <Card className="col-start-1 min-w-[350px]">
             <CardHeader>
                 <CardTitle>Import Wallets</CardTitle>
                 <CardDescription>Import wallets from a file.</CardDescription>

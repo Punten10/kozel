@@ -58,24 +58,30 @@ const ExportType = [
 export const WalletsGeneration: React.FC<WalletsProps> = () => {
     const formRef = useRef<HTMLFormElement>(null);
     const [walletGroup, setWalletGroup] = useState<WalletGroup[]>([]);
+    const [_walletType, setWalletType] = useState<string>("");
+    const [numWallets, setNumWallets] = useState<number | string>("");
+    const [_exportType, setExportType] = useState<string>("");
 
     const handleReset = () => {
         if (formRef.current) {
             formRef.current.reset();
         }
         setWalletGroup([]);
+        setWalletType("");
+        setNumWallets("");
+        setExportType("");
     };
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        // Ваш код для отправки данных
+        // Your code for form submission
         console.log("Form submitted");
         // Reset form and state variables
         handleReset();
     };
 
     return (
-        <Card className="col-start-1 w-[350px]">
+        <Card className="col-start-1  min-w-[350px]">
             <CardHeader>
                 <CardTitle>Create Wallets</CardTitle>
                 <CardDescription>
@@ -87,7 +93,7 @@ export const WalletsGeneration: React.FC<WalletsProps> = () => {
                     <div className="grid w-full items-center gap-4">
                         <div className="flex flex-col space-y-1.5">
                             <Label htmlFor="type">Wallet Type</Label>
-                            <Select>
+                            <Select onValueChange={setWalletType}>
                                 <SelectTrigger id="type">
                                     <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
@@ -110,10 +116,12 @@ export const WalletsGeneration: React.FC<WalletsProps> = () => {
                                 placeholder="Enter number of wallets"
                                 className="w-full rounded-lg border p-2"
                                 min={0}
+                                value={numWallets}
+                                onChange={e => setNumWallets(e.target.value)}
                             />
 
                             <Label htmlFor="exportType">Save as</Label>
-                            <Select>
+                            <Select onValueChange={setExportType}>
                                 <SelectTrigger id="exportType">
                                     <SelectValue placeholder="Select export way" />
                                 </SelectTrigger>
@@ -172,7 +180,6 @@ export const WalletsGeneration: React.FC<WalletsProps> = () => {
         </Card>
     );
 };
-
 type Status = {
     value: string;
     label: string;
@@ -235,10 +242,7 @@ export function GroupManager({
             </div>
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
-                    <Button
-                        variant="outline"
-                        className="w-[300px] justify-start"
-                    >
+                    <Button variant="outline" className="w-full justify-start">
                         {selectedStatus ? (
                             <>{selectedStatus.label}</>
                         ) : (
@@ -246,7 +250,7 @@ export function GroupManager({
                         )}
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0" align="start">
+                <PopoverContent className="p-0" align="start">
                     <Command>
                         <CommandInput placeholder="Filter groups..." />
                         <CommandList>
