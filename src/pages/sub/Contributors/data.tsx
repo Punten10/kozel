@@ -46,7 +46,7 @@ export const contributors: IContributor[] = [
     {
         name: "kakadugenius",
         role: "Designer",
-        avatar: "https://cdn4.cdn-telegram.org/file/sbt-EI2zzUHuYDp4pHZcjdKDI3OLqrrCoruD9Dh8GHacRk3n-bArZT1focPTGAHzqqXQ1TjeRr0mMak7NgOYhRI1q33V6p6LsmzpSNaQZZRidzaCqG83M5O05V89NDnIvGaijMhWItZEU3Ij0loG45ud0fGxVpdMGfmtUX2uO5ON7LlwoidWglIxBRco8jMBlKBirllj6HmXvRenJfNB4-0UNP4c59oDCxOwBLpoiv8Ddno44bBmKxnCa4O4UfeRpxTC97vBLgXG4zxL3geRhUDqPmxO5Grj4j8TXc5leHb3wxLjTM7HpztkShYkBTljg70Dl3nyoWHCeokGST-MdQ.jpg",
+        avatar: "https://cdn4.cdn-telegram.org/file/gMsMYRZh3YurQXnTUdp_Ak9VMLANhJ38r5AazSasedFOJJSHcqPZRL7uRfsaQJwLxLM22Ijd4SjEf1wMN2IdzG3Sc_zzVxMfdVCnFNhBgWczgp7Hmak2YfWbs4c-moW1qJBYwD0YTjZEaWJkP_EnLY0YvmBCkkEN4QXAnxaDvrkgK596Y_nb1Gt2Lx4OUmm3JcTIgiZmcsl_H0BmsUiSI3YiXQOe5Wg6RnpqCV1rVSMMGNeFxmw_4oVMwYwmFp_kHqSAPTSKgjVgtCAskIH64-YVRN1PjVq52xq083DOTUFplmUzN2QekEASLGwVsLin7z5hz4X6HmGlhoeO8FD7pw.jpg",
         tg: "https://t.me/kakadugenius",
         j_date: "June 2024",
         link: "https://t.me/nullCryptan",

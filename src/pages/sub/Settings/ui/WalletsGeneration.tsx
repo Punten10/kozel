@@ -37,7 +37,13 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from "@/components/ui/hover-card.tsx";
-import { WalletGroup, WalletsProps } from "@/pages/sub/Wallets/interfaces.tsx";
+import {
+    IGroup,
+    WalletGroup,
+    WalletsProps,
+} from "@/pages/sub/Wallets/interfaces.tsx";
+import { useAppSelector } from "@/app/store/hooks";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
 
 const WalletsType = [
     { name: "EVM", value: "evm" },
@@ -138,7 +144,7 @@ export const WalletsGeneration: React.FC<WalletsProps> = () => {
                             </Select>
                             <Label htmlFor="group">
                                 <p className={"flex items-center gap-2"}>
-                                    Add to group?
+                                    Add to Wallet Group?
                                     <HoverCard>
                                         <HoverCardTrigger>
                                             <CircleHelp
@@ -160,6 +166,32 @@ export const WalletsGeneration: React.FC<WalletsProps> = () => {
                                 walletGroup={walletGroup}
                                 setWalletGroup={setWalletGroup}
                             />
+
+                            <div className="flex items-center space-x-2 pt-2">
+                                <Checkbox id="addToWork" checked={true} />
+                                <label
+                                    htmlFor="terms"
+                                    className="flex gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Add wallet to WorkList?
+                                    <HoverCard>
+                                        <HoverCardTrigger>
+                                            <CircleHelp
+                                                className={
+                                                    "h-4 w-4 opacity-80 hover:opacity-100"
+                                                }
+                                            />
+                                        </HoverCardTrigger>
+                                        <HoverCardContent>
+                                            If you enable this option, the
+                                            wallet will be added to the
+                                            worklight ("Your Wallets"). If not
+                                            wallets just will be generated and
+                                            exported.
+                                        </HoverCardContent>
+                                    </HoverCard>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
@@ -180,25 +212,6 @@ export const WalletsGeneration: React.FC<WalletsProps> = () => {
         </Card>
     );
 };
-type Status = {
-    value: string;
-    label: string;
-};
-
-const statuses: Status[] = [
-    {
-        value: "g_one",
-        label: "Group One",
-    },
-    {
-        value: "g_two",
-        label: "Group Two",
-    },
-    {
-        value: "main",
-        label: "Main",
-    },
-];
 
 type GroupManagerProps = {
     walletGroup: WalletGroup[];
@@ -210,12 +223,14 @@ export function GroupManager({
     setWalletGroup,
 }: GroupManagerProps) {
     const [open, setOpen] = React.useState(false);
-    const [selectedStatus, setSelectedStatus] = React.useState<Status | null>(
+    const [selectedStatus, setSelectedStatus] = React.useState<IGroup | null>(
         null,
     );
+    const groups = useAppSelector(state => state.wallet.groups);
 
     const handleSelectStatus = (value: string) => {
-        const status = statuses.find(status => status.value === value) || null;
+        const status =
+            groups.find((group: IGroup) => group.value === value) || null;
         if (status && !walletGroup.includes(status.label)) {
             setWalletGroup([...walletGroup, status.label]);
         }
@@ -256,13 +271,13 @@ export function GroupManager({
                         <CommandList>
                             <CommandEmpty>No group found.</CommandEmpty>
                             <CommandGroup>
-                                {statuses.map(status => (
+                                {groups.map((group: IGroup) => (
                                     <CommandItem
-                                        key={status.value}
-                                        value={status.value}
+                                        key={group.value}
+                                        value={group.value}
                                         onSelect={handleSelectStatus}
                                     >
-                                        {status.label}
+                                        {group.label}
                                     </CommandItem>
                                 ))}
                             </CommandGroup>

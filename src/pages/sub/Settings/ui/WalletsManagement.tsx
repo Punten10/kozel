@@ -13,7 +13,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import {
     Command,
     CommandEmpty,
@@ -23,65 +23,63 @@ import {
     CommandList,
 } from "@/components/ui/command.tsx";
 import { cn } from "@/lib/utils.ts";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { useAppSelector } from "@/app/store/hooks";
+import {
+    IAddress,
+    IWallet,
+    WalletType,
+} from "@/pages/sub/Wallets/interfaces.tsx";
 import { WalletItem } from "@/pages/sub/Settings/ui/WalletItems.tsx";
+import { shortenWalletAddress } from "@/lib/wallets.ts";
+import { Input } from "@/components/ui/input.tsx";
+import { TypographyMuted } from "@/components/ui/typography.tsx";
 
-const frameworks = [
-    {
-        value: "all",
-        label: "All groups",
-    },
-    {
-        value: "sveltekit",
-        label: "SvelteKit",
-    },
-    {
-        value: "nuxt.js",
-        label: "Nuxt.js",
-    },
-    {
-        value: "remix",
-        label: "Remix",
-    },
-    {
-        value: "astro",
-        label: "Astro",
-    },
-];
-
-const walletsData = [
-    { id: 1, label: "feature" },
-    { id: 2, label: "bug" },
-    { id: 3, label: "enhancement" },
-    { id: 4, label: "documentation" },
-    { id: 5, label: "design" },
+const walletsType: WalletType[] = [
+    "ton",
+    "cosmos",
+    "evm",
+    "trx",
+    "sol",
+    "starknet",
 ];
 
 const WalletsManagement: React.FC = () => {
+    const wallets = useAppSelector(state => state.wallet.wallets);
+    const groups = useAppSelector(state => state.wallet.groups);
+
     const [groupFilterOpen, setGroupFilterOpen] = React.useState(false);
     const [groupFilter, setGroupFilter] = React.useState("");
-    const [selectedWallets, setSelectedWallets] = React.useState<number[]>([]);
+    const [selectedWallets, setSelectedWallets] = React.useState<IAddress[]>(
+        [],
+    );
     const [allSelected, setAllSelected] = React.useState(false);
+
+    const [walletTypeFilterOpen, setWalletTypeOpen] = React.useState(false);
+    const [walletType, setWalletType] = React.useState("");
 
     const handleSelectAll = () => {
         if (allSelected) {
             setSelectedWallets([]);
         } else {
-            setSelectedWallets(walletsData.map(wallet => wallet.id));
+            // setSelectedWallets(walletsData.map(wallet => wallet.id));
         }
         setAllSelected(!allSelected);
     };
 
-    const handleSelectWallet = (id: number) => {
+    const handleSelectWallet = (address: IAddress) => {
         setSelectedWallets(prevSelected =>
-            prevSelected.includes(id)
-                ? prevSelected.filter(walletId => walletId !== id)
-                : [...prevSelected, id],
+            prevSelected.includes(address)
+                ? prevSelected.filter(
+                      walletAddress => walletAddress !== address,
+                  )
+                : [...prevSelected, address],
         );
     };
 
-    const handleLabelChange = (id: number, newLabel: string) => {
+    const handleLabelChange = (address: IAddress, newLabel: string) => {
         // Update wallet label logic here if needed
-        console.log(id, newLabel);
+        console.log(address, newLabel);
     };
 
     return (
@@ -107,7 +105,13 @@ const WalletsManagement: React.FC = () => {
                                     className="w-[200px] justify-between"
                                 >
                                     {groupFilter
-                                        ? frameworks.find(
+                                        ? [
+                                              {
+                                                  value: "all",
+                                                  label: "All groups",
+                                              },
+                                              ...groups,
+                                          ].find(
                                               framework =>
                                                   framework.value ===
                                                   groupFilter,
@@ -127,7 +131,13 @@ const WalletsManagement: React.FC = () => {
                                             No group found.
                                         </CommandEmpty>
                                         <CommandGroup>
-                                            {frameworks.map(framework => (
+                                            {[
+                                                {
+                                                    value: "all",
+                                                    label: "All groups",
+                                                },
+                                                ...groups,
+                                            ].map(framework => (
                                                 <CommandItem
                                                     key={framework.value}
                                                     value={framework.value}
@@ -161,28 +171,115 @@ const WalletsManagement: React.FC = () => {
                             </PopoverContent>
                         </Popover>
                         <Separator orientation="vertical" />
+                        <Popover
+                            open={walletTypeFilterOpen}
+                            onOpenChange={setWalletTypeOpen}
+                        >
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={walletTypeFilterOpen}
+                                    className="w-[200px] justify-between"
+                                >
+                                    {walletType
+                                        ? [
+                                              {
+                                                  value: "all",
+                                                  label: "All groups",
+                                              },
+                                              ...groups,
+                                          ].find(
+                                              framework =>
+                                                  framework.value ===
+                                                  walletType,
+                                          )?.label
+                                        : "Filter by type..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                className="w-[200px] p-0"
+                                align="start"
+                            >
+                                <Command>
+                                    <CommandInput placeholder="Filter by type..." />
+                                    <CommandList>
+                                        <CommandEmpty>
+                                            No wallet type found.
+                                        </CommandEmpty>
+                                        <CommandGroup>
+                                            {walletsType.map(type => (
+                                                <CommandItem
+                                                    key={type}
+                                                    value={type}
+                                                    onSelect={currentValue => {
+                                                        setWalletType(
+                                                            currentValue ===
+                                                                walletType
+                                                                ? ""
+                                                                : currentValue,
+                                                        );
+                                                        setWalletTypeOpen(
+                                                            false,
+                                                        );
+                                                    }}
+                                                    className={"capitalize"}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            walletType === type
+                                                                ? "opacity-100"
+                                                                : "opacity-0",
+                                                        )}
+                                                    />
+                                                    {type}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
             </CardHeader>
             <CardContent className="grid gap-2">
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        checked={allSelected}
-                        onChange={handleSelectAll}
-                        className="mr-2"
+                <div className="relative flex-1 md:grow-0">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search wallets by Address / Label / ENS"
+                        className="w-full rounded-lg bg-background pl-8 dark:text-muted-foreground md:w-[200px] lg:w-[336px]"
                     />
-                    <span>Select All</span>
                 </div>
-                {walletsData.map(wallet => (
+                <div className="flex items-center gap-4">
+                    <Checkbox
+                        checked={allSelected}
+                        onClick={handleSelectAll}
+                        className="ml-4 mr-2"
+                    />
+                    <div className="flex gap-12">
+                        <TypographyMuted className={"w-32"}>
+                            Name / Address
+                        </TypographyMuted>
+                        <TypographyMuted className={"w-32"}>
+                            Status
+                        </TypographyMuted>
+                        <TypographyMuted>Groups</TypographyMuted>
+                    </div>
+                </div>
+                {wallets.map((wallet: IWallet) => (
                     <WalletItem
-                        key={wallet.id}
-                        label={wallet.label}
+                        key={wallet.address}
+                        wallet={wallet}
+                        shortAddress={shortenWalletAddress(wallet.address)}
                         onLabelChange={(newLabel: string) =>
-                            handleLabelChange(wallet.id, newLabel)
+                            handleLabelChange(wallet.address, newLabel)
                         }
-                        isSelected={selectedWallets.includes(wallet.id)}
-                        onSelect={() => handleSelectWallet(wallet.id)}
+                        isSelected={selectedWallets.includes(wallet.address)}
+                        onSelect={() => handleSelectWallet(wallet.address)}
                     />
                 ))}
             </CardContent>

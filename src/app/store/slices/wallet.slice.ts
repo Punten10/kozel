@@ -1,14 +1,62 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { IWallet } from "@/pages/sub/Wallets/interfaces.tsx";
+import { IGroup, IWallet } from "@/pages/sub/Wallets/interfaces.tsx";
 
 interface IWallets {
-    wallets?: IWallet[];
+    wallets: IWallet[];
+    groups: IGroup[];
 }
 
-const initialState: IWallets = {};
+const initialState: IWallets = {
+    wallets: [
+        {
+            isConnected: true,
+            address: "0x2d1cc54da76ee2af14b289527cd026b417764fab",
+            balance: "0.23",
+            isDisabled: false,
+            type: "evm",
+            phrase: null,
+            label: "Aero Wallet",
+            ens: null,
+            group: ["default", "g_one"],
+        },
+        {
+            isConnected: true,
+            address: "0x45B6cEBF3528fC8A52657E73b7dEDAfe122c1308",
+            balance: "0.23",
+            isDisabled: false,
+            type: "evm",
+            phrase: null,
+            label: null,
+            ens: null,
+            group: ["default"],
+        },
+    ],
+    groups: [
+        {
+            value: "default",
+            label: "Default Group",
+        },
+        {
+            value: "personal",
+            label: "Personal Group",
+        },
+        {
+            value: "work",
+            label: "Work Group",
+        },
+        {
+            value: "g_one",
+            label: "Group One",
+        },
+        {
+            value: "g_two",
+            label: "Group Two",
+        },
+    ],
+};
 
-const mediaSlice = createSlice({
-    name: "media",
+const walletSlice = createSlice({
+    name: "wallets",
     initialState,
     reducers: {
         // remove all the wallets
@@ -55,5 +103,5 @@ const mediaSlice = createSlice({
     },
 });
 
-export default mediaSlice.reducer;
-export const {} = mediaSlice.actions;
+export default walletSlice.reducer;
+export const {} = walletSlice.actions;
