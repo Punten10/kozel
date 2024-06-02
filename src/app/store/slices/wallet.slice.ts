@@ -65,7 +65,12 @@ const walletSlice = createSlice({
         },
         // add a wallet
         addWallet: (state, action) => {
-            state.wallets?.push(action.payload);
+            const exists = state.wallets?.some(
+                wallet => wallet.address === action.payload.address,
+            );
+            if (!exists) {
+                state.wallets?.push(action.payload);
+            }
         },
         // remove a wallet
         removeWallet: (state, action) => {
@@ -83,15 +88,22 @@ const walletSlice = createSlice({
         },
         // add a group to a wallet
         addToGroup: (state, action) => {
-            state.wallets = state.wallets?.map(wallet =>
-                wallet.address === action.payload.address
-                    ? {
-                          ...wallet,
-                          group: [action.payload.group, ...wallet.group],
-                      }
-                    : wallet,
-            );
+            state.wallets = state.wallets?.map(wallet => {
+                if (wallet.address === action.payload.address) {
+                    const groupExists = wallet.group.includes(
+                        action.payload.group,
+                    );
+                    if (!groupExists) {
+                        return {
+                            ...wallet,
+                            group: [action.payload.group, ...wallet.group],
+                        };
+                    }
+                }
+                return wallet;
+            });
         },
+        // remove a group from a wallet
         removeFromGroup: (state, action) => {
             state.wallets = state.wallets.map(wallet =>
                 wallet.address === action.payload.address
@@ -104,7 +116,7 @@ const walletSlice = createSlice({
                     : wallet,
             );
         },
-        // remove a group from a wallet
+        // set label for a wallet
         setLabel: (state, action) => {
             state.wallets = state.wallets?.map(wallet =>
                 wallet.address === action.payload.address

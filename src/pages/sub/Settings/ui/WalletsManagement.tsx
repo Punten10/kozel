@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
     Card,
     CardContent,
@@ -13,7 +13,14 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import {
+    Check,
+    ChevronsUpDown,
+    MoreHorizontal,
+    Search,
+    Trash,
+    Users,
+} from "lucide-react";
 import {
     Command,
     CommandEmpty,
@@ -24,7 +31,7 @@ import {
 } from "@/components/ui/command.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Checkbox } from "@/components/ui/checkbox.tsx";
-import { useAppSelector } from "@/app/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/store/hooks";
 import {
     IAddress,
     IGroup,
@@ -34,7 +41,35 @@ import {
 import { Input } from "@/components/ui/input.tsx";
 import { TypographyMuted } from "@/components/ui/typography.tsx";
 import { WalletItem } from "@/pages/sub/Settings/ui/WalletItems.tsx";
-import { shortenWalletAddress } from "@/lib/wallets.ts";
+import { getGroupLabel, shortenWalletAddress } from "@/lib/wallets.ts";
+import {
+    addToGroup,
+    removeFromGroup,
+    removeWallet,
+} from "@/app/store/slices/wallet.slice.ts";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuShortcut,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu.tsx";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog.tsx";
 
 const walletsType: WalletType[] = [
     "ton",
@@ -48,39 +83,19 @@ const walletsType: WalletType[] = [
 const WalletsManagement: React.FC = () => {
     const wallets = useAppSelector(state => state.wallet.wallets);
     const groups = useAppSelector(state => state.wallet.groups);
+    const dispatch = useAppDispatch();
 
-    const [groupFilterOpen, setGroupFilterOpen] = React.useState(false);
-    const [groupFilter, setGroupFilter] = React.useState("");
-    const [selectedWallets, setSelectedWallets] = React.useState<IAddress[]>(
-        [],
-    );
-    const [allSelected, setAllSelected] = React.useState(false);
+    const [groupFilterOpen, setGroupFilterOpen] = useState(false);
+    const [groupFilter, setGroupFilter] = useState("");
+    const [selectedWallets, setSelectedWallets] = useState<IAddress[]>([]);
+    const [allSelected, setAllSelected] = useState(false);
 
-    const [walletTypeFilterOpen, setWalletTypeOpen] = React.useState(false);
-    const [walletType, setWalletType] = React.useState("");
+    const [walletTypeFilterOpen, setWalletTypeOpen] = useState(false);
+    const [walletType, setWalletType] = useState("");
 
-    const [searchQuery, setSearchQuery] = React.useState("");
-
-    const handleSelectAll = () => {
-        if (allSelected) {
-            setSelectedWallets([]);
-        } else {
-            setSelectedWallets(
-                wallets.map((wallet: IWallet) => wallet.address),
-            );
-        }
-        setAllSelected(!allSelected);
-    };
-
-    const handleSelectWallet = (address: IAddress) => {
-        setSelectedWallets(prevSelected =>
-            prevSelected.includes(address)
-                ? prevSelected.filter(
-                      walletAddress => walletAddress !== address,
-                  )
-                : [...prevSelected, address],
-        );
-    };
+    const [searchQuery, setSearchQuery] = useState("");
+    const [bulkActionOpen, setBulkActionOpen] = useState(false);
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
     const filteredWallets = React.useMemo(() => {
         return wallets.filter((wallet: IWallet) => {
@@ -96,6 +111,58 @@ const WalletsManagement: React.FC = () => {
             return matchesSearch && matchesGroup && matchesType;
         });
     }, [wallets, searchQuery, groupFilter, walletType]);
+
+    useEffect(() => {
+        if (filteredWallets.length === 0) {
+            setSelectedWallets([]);
+            setAllSelected(false);
+        } else if (allSelected) {
+            setSelectedWallets(
+                filteredWallets.map((wallet: IWallet) => wallet.address),
+            );
+        }
+    }, [filteredWallets, allSelected]);
+
+    const handleSelectAll = () => {
+        if (allSelected) {
+            setSelectedWallets([]);
+        } else {
+            setSelectedWallets(
+                filteredWallets.map((wallet: IWallet) => wallet.address),
+            );
+        }
+        setAllSelected(!allSelected);
+    };
+
+    const handleSelectWallet = (address: IAddress) => {
+        setSelectedWallets(prevSelected =>
+            prevSelected.includes(address)
+                ? prevSelected.filter(
+                      walletAddress => walletAddress !== address,
+                  )
+                : [...prevSelected, address],
+        );
+    };
+
+    const handleAddToGroup = (group: string) => {
+        selectedWallets.forEach(address => {
+            dispatch(addToGroup({ address, group }));
+        });
+    };
+
+    const handleRemoveFromGroup = (group: string) => {
+        selectedWallets.forEach(address => {
+            dispatch(removeFromGroup({ address, group }));
+        });
+    };
+
+    const handleDeleteWallets = () => {
+        selectedWallets.forEach(address => {
+            dispatch(removeWallet(address));
+        });
+        setSelectedWallets([]);
+        setConfirmDeleteOpen(false);
+    };
 
     return (
         <Card className="col-span-2 col-start-2 row-span-2 row-start-1">
@@ -240,6 +307,169 @@ const WalletsManagement: React.FC = () => {
                                 </Command>
                             </PopoverContent>
                         </Popover>
+                        {selectedWallets.length > 0 && (
+                            <div className="ml-auto">
+                                <DropdownMenu
+                                    open={bulkActionOpen}
+                                    onOpenChange={setBulkActionOpen}
+                                >
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                            <MoreHorizontal />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="w-[200px]"
+                                    >
+                                        <DropdownMenuLabel>
+                                            Bulk Actions
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuGroup>
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger>
+                                                    <Users className="mr-2 h-4 w-4" />
+                                                    Add to Group
+                                                </DropdownMenuSubTrigger>
+                                                <DropdownMenuSubContent className="p-0">
+                                                    <Command>
+                                                        <CommandInput
+                                                            placeholder="Filter groups..."
+                                                            autoFocus={true}
+                                                        />
+                                                        <CommandList>
+                                                            <CommandEmpty>
+                                                                No group found.
+                                                            </CommandEmpty>
+                                                            <CommandGroup>
+                                                                {groups.map(
+                                                                    (
+                                                                        group: IGroup,
+                                                                    ) => (
+                                                                        <CommandItem
+                                                                            key={
+                                                                                group.value
+                                                                            }
+                                                                            value={
+                                                                                group.value
+                                                                            }
+                                                                            onSelect={() => {
+                                                                                handleAddToGroup(
+                                                                                    group.value,
+                                                                                );
+                                                                                setBulkActionOpen(
+                                                                                    false,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            {
+                                                                                group.label
+                                                                            }
+                                                                        </CommandItem>
+                                                                    ),
+                                                                )}
+                                                            </CommandGroup>
+                                                        </CommandList>
+                                                    </Command>
+                                                </DropdownMenuSubContent>
+                                            </DropdownMenuSub>
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger>
+                                                    <Users className="mr-2 h-4 w-4" />
+                                                    Remove from Group
+                                                </DropdownMenuSubTrigger>
+                                                <DropdownMenuSubContent className="p-0">
+                                                    <Command>
+                                                        <CommandInput
+                                                            placeholder="Filter groups..."
+                                                            autoFocus={true}
+                                                        />
+                                                        <CommandList>
+                                                            <CommandEmpty>
+                                                                No group found.
+                                                            </CommandEmpty>
+                                                            <CommandGroup>
+                                                                {groups.map(
+                                                                    (
+                                                                        group: IGroup,
+                                                                    ) => (
+                                                                        <CommandItem
+                                                                            key={
+                                                                                group.value
+                                                                            }
+                                                                            value={
+                                                                                group.value
+                                                                            }
+                                                                            onSelect={() => {
+                                                                                handleRemoveFromGroup(
+                                                                                    group.value,
+                                                                                );
+                                                                                setBulkActionOpen(
+                                                                                    false,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            {getGroupLabel(
+                                                                                group.value,
+                                                                                groups,
+                                                                            )}
+                                                                        </CommandItem>
+                                                                    ),
+                                                                )}
+                                                            </CommandGroup>
+                                                        </CommandList>
+                                                    </Command>
+                                                </DropdownMenuSubContent>
+                                            </DropdownMenuSub>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                className="text-red-600"
+                                                onSelect={() =>
+                                                    setConfirmDeleteOpen(true)
+                                                }
+                                            >
+                                                <Trash className="mr-2 h-4 w-4" />
+                                                Delete
+                                                <DropdownMenuShortcut>
+                                                    ⌘⌫
+                                                </DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuGroup>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <AlertDialog
+                                    open={confirmDeleteOpen}
+                                    onOpenChange={setConfirmDeleteOpen}
+                                >
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle
+                                                className={"text-foreground"}
+                                            >
+                                                Are you sure you want to delete
+                                                the selected wallets?
+                                            </AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel
+                                                className={"text-foreground"}
+                                            >
+                                                Cancel
+                                            </AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={handleDeleteWallets}
+                                            >
+                                                Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        )}
                     </div>
                 </div>
             </CardHeader>
@@ -270,19 +500,31 @@ const WalletsManagement: React.FC = () => {
                         <TypographyMuted>Groups</TypographyMuted>
                     </div>
                 </div>
-                <div className="grid-auto-rows grid gap-2">
-                    {filteredWallets.map((wallet: IWallet) => (
-                        <WalletItem
-                            key={wallet.address}
-                            wallet={wallet}
-                            shortAddress={shortenWalletAddress(wallet.address)}
-                            isSelected={selectedWallets.includes(
-                                wallet.address,
-                            )}
-                            onSelect={() => handleSelectWallet(wallet.address)}
-                        />
-                    ))}
-                </div>
+                {filteredWallets.length > 0 ? (
+                    <div className="grid-auto-rows grid gap-2">
+                        {filteredWallets.map((wallet: IWallet) => (
+                            <WalletItem
+                                key={wallet.address}
+                                wallet={wallet}
+                                shortAddress={shortenWalletAddress(
+                                    wallet.address,
+                                )}
+                                isSelected={selectedWallets.includes(
+                                    wallet.address,
+                                )}
+                                onSelect={() =>
+                                    handleSelectWallet(wallet.address)
+                                }
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex h-32 items-center justify-center">
+                        <TypographyMuted>
+                            No wallets found with the current filter criteria.
+                        </TypographyMuted>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

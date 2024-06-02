@@ -61,7 +61,7 @@ const Contributors: React.FC = () => {
                                     >
                                         <AvatarImage
                                             className={"h-20 w-20"}
-                                            src={contributor.avatar}
+                                            src={`/contributors/${contributor.avatar}`}
                                             alt={`@${contributor.name.toLowerCase()}`}
                                         />
                                         <AvatarFallback>
@@ -74,7 +74,7 @@ const Contributors: React.FC = () => {
                                         <div className={"grid justify-center"}>
                                             <Avatar className={"mx-auto"}>
                                                 <AvatarImage
-                                                    src={contributor.avatar}
+                                                    src={`/contributors/${contributor.avatar}`}
                                                     alt={`@${contributor.name.toLowerCase()}`}
                                                 />
                                                 <AvatarFallback>
