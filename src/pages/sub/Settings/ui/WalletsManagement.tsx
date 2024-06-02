@@ -27,13 +27,14 @@ import { Checkbox } from "@/components/ui/checkbox.tsx";
 import { useAppSelector } from "@/app/store/hooks";
 import {
     IAddress,
+    IGroup,
     IWallet,
     WalletType,
 } from "@/pages/sub/Wallets/interfaces.tsx";
-import { WalletItem } from "@/pages/sub/Settings/ui/WalletItems.tsx";
-import { shortenWalletAddress } from "@/lib/wallets.ts";
 import { Input } from "@/components/ui/input.tsx";
 import { TypographyMuted } from "@/components/ui/typography.tsx";
+import { WalletItem } from "@/pages/sub/Settings/ui/WalletItems.tsx";
+import { shortenWalletAddress } from "@/lib/wallets.ts";
 
 const walletsType: WalletType[] = [
     "ton",
@@ -58,11 +59,15 @@ const WalletsManagement: React.FC = () => {
     const [walletTypeFilterOpen, setWalletTypeOpen] = React.useState(false);
     const [walletType, setWalletType] = React.useState("");
 
+    const [searchQuery, setSearchQuery] = React.useState("");
+
     const handleSelectAll = () => {
         if (allSelected) {
             setSelectedWallets([]);
         } else {
-            // setSelectedWallets(walletsData.map(wallet => wallet.id));
+            setSelectedWallets(
+                wallets.map((wallet: IWallet) => wallet.address),
+            );
         }
         setAllSelected(!allSelected);
     };
@@ -77,10 +82,20 @@ const WalletsManagement: React.FC = () => {
         );
     };
 
-    const handleLabelChange = (address: IAddress, newLabel: string) => {
-        // Update wallet label logic here if needed
-        console.log(address, newLabel);
-    };
+    const filteredWallets = React.useMemo(() => {
+        return wallets.filter((wallet: IWallet) => {
+            const searchString = searchQuery.toLowerCase();
+            const matchesSearch =
+                wallet.address.toLowerCase().includes(searchString) ||
+                (wallet.label &&
+                    wallet.label.toLowerCase().includes(searchString)) ||
+                (wallet.ens && wallet.ens.toLowerCase().includes(searchString));
+            const matchesGroup =
+                !groupFilter || wallet.group.includes(groupFilter);
+            const matchesType = !walletType || wallet.type === walletType;
+            return matchesSearch && matchesGroup && matchesType;
+        });
+    }, [wallets, searchQuery, groupFilter, walletType]);
 
     return (
         <Card className="col-span-2 col-start-2 row-span-2 row-start-1">
@@ -105,16 +120,9 @@ const WalletsManagement: React.FC = () => {
                                     className="w-[200px] justify-between"
                                 >
                                     {groupFilter
-                                        ? [
-                                              {
-                                                  value: "all",
-                                                  label: "All groups",
-                                              },
-                                              ...groups,
-                                          ].find(
-                                              framework =>
-                                                  framework.value ===
-                                                  groupFilter,
+                                        ? groups.find(
+                                              (group: IGroup) =>
+                                                  group.value === groupFilter,
                                           )?.label
                                         : "Filter by group..."}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -131,16 +139,10 @@ const WalletsManagement: React.FC = () => {
                                             No group found.
                                         </CommandEmpty>
                                         <CommandGroup>
-                                            {[
-                                                {
-                                                    value: "all",
-                                                    label: "All groups",
-                                                },
-                                                ...groups,
-                                            ].map(framework => (
+                                            {groups.map((group: IGroup) => (
                                                 <CommandItem
-                                                    key={framework.value}
-                                                    value={framework.value}
+                                                    key={group.value}
+                                                    value={group.value}
                                                     onSelect={currentValue => {
                                                         setGroupFilter(
                                                             currentValue ===
@@ -157,12 +159,12 @@ const WalletsManagement: React.FC = () => {
                                                         className={cn(
                                                             "mr-2 h-4 w-4",
                                                             groupFilter ===
-                                                                framework.value
+                                                                group.value
                                                                 ? "opacity-100"
                                                                 : "opacity-0",
                                                         )}
                                                     />
-                                                    {framework.label}
+                                                    {group.label}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -182,19 +184,15 @@ const WalletsManagement: React.FC = () => {
                                     aria-expanded={walletTypeFilterOpen}
                                     className="w-[200px] justify-between"
                                 >
-                                    {walletType
-                                        ? [
-                                              {
-                                                  value: "all",
-                                                  label: "All groups",
-                                              },
-                                              ...groups,
-                                          ].find(
-                                              framework =>
-                                                  framework.value ===
-                                                  walletType,
-                                          )?.label
-                                        : "Filter by type..."}
+                                    {walletType ? (
+                                        <span className={"capitalize"}>
+                                            {walletsType.find(
+                                                type => type === walletType,
+                                            )}
+                                        </span>
+                                    ) : (
+                                        "Filter by type..."
+                                    )}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </PopoverTrigger>
@@ -252,6 +250,8 @@ const WalletsManagement: React.FC = () => {
                         type="search"
                         placeholder="Search wallets by Address / Label / ENS"
                         className="w-full rounded-lg bg-background pl-8 dark:text-muted-foreground md:w-[200px] lg:w-[336px]"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
                     />
                 </div>
                 <div className="flex items-center gap-4">
@@ -270,18 +270,19 @@ const WalletsManagement: React.FC = () => {
                         <TypographyMuted>Groups</TypographyMuted>
                     </div>
                 </div>
-                {wallets.map((wallet: IWallet) => (
-                    <WalletItem
-                        key={wallet.address}
-                        wallet={wallet}
-                        shortAddress={shortenWalletAddress(wallet.address)}
-                        onLabelChange={(newLabel: string) =>
-                            handleLabelChange(wallet.address, newLabel)
-                        }
-                        isSelected={selectedWallets.includes(wallet.address)}
-                        onSelect={() => handleSelectWallet(wallet.address)}
-                    />
-                ))}
+                <div className="grid-auto-rows grid gap-2">
+                    {filteredWallets.map((wallet: IWallet) => (
+                        <WalletItem
+                            key={wallet.address}
+                            wallet={wallet}
+                            shortAddress={shortenWalletAddress(wallet.address)}
+                            isSelected={selectedWallets.includes(
+                                wallet.address,
+                            )}
+                            onSelect={() => handleSelectWallet(wallet.address)}
+                        />
+                    ))}
+                </div>
             </CardContent>
         </Card>
     );

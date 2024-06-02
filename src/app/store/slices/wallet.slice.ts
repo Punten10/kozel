@@ -28,7 +28,7 @@ const initialState: IWallets = {
             phrase: null,
             label: null,
             ens: null,
-            group: ["default"],
+            group: [],
         },
     ],
     groups: [
@@ -87,7 +87,19 @@ const walletSlice = createSlice({
                 wallet.address === action.payload.address
                     ? {
                           ...wallet,
-                          group: [...wallet.group, action.payload.group],
+                          group: [action.payload.group, ...wallet.group],
+                      }
+                    : wallet,
+            );
+        },
+        removeFromGroup: (state, action) => {
+            state.wallets = state.wallets.map(wallet =>
+                wallet.address === action.payload.address
+                    ? {
+                          ...wallet,
+                          group: wallet.group.filter(
+                              group => group !== action.payload.group,
+                          ),
                       }
                     : wallet,
             );
@@ -104,4 +116,12 @@ const walletSlice = createSlice({
 });
 
 export default walletSlice.reducer;
-export const {} = walletSlice.actions;
+export const {
+    removeAllWallets,
+    addWallet,
+    removeWallet,
+    updateWallet,
+    addToGroup,
+    setLabel,
+    removeFromGroup,
+} = walletSlice.actions;

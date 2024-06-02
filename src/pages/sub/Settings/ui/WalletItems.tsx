@@ -1,14 +1,20 @@
-import { Calendar, MoreHorizontal, Tags, Trash, User } from "lucide-react";
+// WalletItems.tsx
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { KeyRound, MoreHorizontal, Tag, Trash, Users } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/app/store/hooks";
+import { IWallet } from "@/pages/sub/Wallets/interfaces.tsx";
+import { CopyDiv } from "@/shared/CopyDiv.tsx";
+import { getGroupLabel } from "@/lib/wallets.ts";
+
+import { Label, TypographySmall } from "@/components/ui/typography";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
 import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from "@/components/ui/hover-card.tsx";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -21,36 +27,43 @@ import {
     DropdownMenuSubContent,
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import { Checkbox } from "@/components/ui/checkbox";
-import { IWallet } from "@/pages/sub/Wallets/interfaces.tsx";
-import { TypographySmall } from "@/components/ui/typography.tsx";
-import { CopyDiv } from "@/shared/CopyDiv.tsx";
+} from "@/components/ui/dropdown-menu.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card.tsx";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area.tsx";
-import { useAppSelector } from "@/app/store/hooks";
-import { getGroupLabel } from "@/lib/wallets.ts";
-import { Badge } from "@/components/ui/badge.tsx";
-
-const labels = [
-    "feature",
-    "bug",
-    "enhancement",
-    "documentation",
-    "design",
-    "question",
-    "maintenance",
-];
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command.tsx";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog.tsx";
+import {
+    addToGroup,
+    removeFromGroup,
+    setLabel,
+} from "@/app/store/slices/wallet.slice.ts";
 
 interface IWalletItemProps {
     wallet: IWallet;
     shortAddress: string;
-    onLabelChange: (label: string) => void;
     isSelected: boolean;
     onSelect: () => void;
 }
@@ -58,19 +71,31 @@ interface IWalletItemProps {
 export const WalletItem: React.FC<IWalletItemProps> = ({
     wallet,
     shortAddress,
-    onLabelChange,
     isSelected,
     onSelect,
 }) => {
     const [open, setOpen] = React.useState(false);
+    const [alertDialogOpen, setAlertDialogOpen] = React.useState(false);
+    const [editLabelOpen, setEditLabelOpen] = React.useState(false);
+    const [newLabel, setNewLabel] = React.useState(wallet.label);
     const groups = useAppSelector(state => state.wallet.groups);
+    const dispatch = useAppDispatch();
+
+    const handleLabelChange = (e: React.FormEvent) => {
+        e.preventDefault();
+        dispatch(setLabel({ address: wallet.address, label: newLabel }));
+        setEditLabelOpen(false);
+    };
 
     return (
         <div className="flex w-full flex-col items-start justify-between rounded-md border border-zinc-800 px-4 py-3 sm:flex-row sm:items-center">
             <div className="flex items-center">
                 <Checkbox
                     checked={isSelected}
-                    onClick={onSelect}
+                    onClick={e => {
+                        e.preventDefault();
+                        onSelect();
+                    }}
                     className="mr-6"
                 />
                 <div className="flex items-center justify-center gap-8">
@@ -128,41 +153,53 @@ export const WalletItem: React.FC<IWalletItemProps> = ({
                 <DropdownMenuContent align="end" className="w-[200px]">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuGroup>
-                        <DropdownMenuItem>
-                            <User className="mr-2 h-4 w-4" />
-                            Assign to...
+                        <DropdownMenuItem
+                            onSelect={() => setEditLabelOpen(true)}
+                        >
+                            <Tag className="mr-2 h-4 w-4" />
+                            Set Label...
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Calendar className="mr-2 h-4 w-4" />
-                            Set due date...
-                        </DropdownMenuItem>
+                        {wallet?.phrase && (
+                            <DropdownMenuItem
+                                onSelect={() => setAlertDialogOpen(true)}
+                            >
+                                <KeyRound className="mr-2 h-4 w-4" />
+                                See Phrase
+                            </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuSub>
                             <DropdownMenuSubTrigger>
-                                <Tags className="mr-2 h-4 w-4" />
+                                <Users className="mr-2 h-4 w-4" />
                                 Add to Group
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent className="p-0">
                                 <Command>
                                     <CommandInput
-                                        placeholder="Filter label..."
+                                        placeholder="Filter groups..."
                                         autoFocus={true}
                                     />
                                     <CommandList>
                                         <CommandEmpty>
-                                            No label found.
+                                            No group found.
                                         </CommandEmpty>
                                         <CommandGroup>
-                                            {labels.map(item => (
+                                            {groups.map((group: any) => (
                                                 <CommandItem
-                                                    key={item}
-                                                    value={item}
+                                                    key={group.value}
+                                                    value={group.value}
                                                     onSelect={() => {
-                                                        onLabelChange(item);
+                                                        dispatch(
+                                                            addToGroup({
+                                                                address:
+                                                                    wallet.address,
+                                                                group: group.value,
+                                                            }),
+                                                        );
                                                         setOpen(false);
                                                     }}
                                                 >
-                                                    {item}
+                                                    {group.label}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -170,8 +207,57 @@ export const WalletItem: React.FC<IWalletItemProps> = ({
                                 </Command>
                             </DropdownMenuSubContent>
                         </DropdownMenuSub>
+                        {wallet.group.length > 0 && (
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Remove from Group
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent className="p-0">
+                                    <Command>
+                                        <CommandInput
+                                            placeholder="Filter groups..."
+                                            autoFocus={true}
+                                        />
+                                        <CommandList>
+                                            <CommandEmpty>
+                                                No group found.
+                                            </CommandEmpty>
+                                            <CommandGroup>
+                                                {wallet.group.map(group => (
+                                                    <CommandItem
+                                                        key={group}
+                                                        value={group}
+                                                        onSelect={() => {
+                                                            dispatch(
+                                                                removeFromGroup(
+                                                                    {
+                                                                        address:
+                                                                            wallet.address,
+                                                                        group,
+                                                                    },
+                                                                ),
+                                                            );
+                                                            setOpen(false);
+                                                        }}
+                                                    >
+                                                        {getGroupLabel(
+                                                            group,
+                                                            groups,
+                                                        )}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                        )}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem
+                            className="text-red-600"
+                            onSelect={() => setAlertDialogOpen(true)}
+                        >
                             <Trash className="mr-2 h-4 w-4" />
                             Delete
                             <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
@@ -179,6 +265,62 @@ export const WalletItem: React.FC<IWalletItemProps> = ({
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Edit Label Dialog */}
+            <Dialog open={editLabelOpen} onOpenChange={setEditLabelOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Label</DialogTitle>
+                        <DialogDescription>
+                            Change the label for your wallet. Click save when
+                            you're done.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleLabelChange}>
+                        <div className="grid gap-2">
+                            <Label htmlFor="label">Label</Label>
+                            <Input
+                                id="label"
+                                value={`${newLabel}`}
+                                onChange={e => setNewLabel(e.target.value)}
+                                placeholder="Enter new label"
+                                className={"text-foreground"}
+                            />
+                        </div>
+                        <Button type="submit" className="mt-4">
+                            Save changes
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Secret Phrase AlertDialog */}
+            <AlertDialog
+                open={alertDialogOpen}
+                onOpenChange={setAlertDialogOpen}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className={"text-foreground"}>
+                            Are you absolutely sure you want to see the Secret
+                            Phrase?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className={"text-foreground"}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => console.log("Show Phrase")}
+                        >
+                            Show Phrase
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
